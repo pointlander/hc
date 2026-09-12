@@ -1,0 +1,33 @@
+# Built binaries
+/hc
+/cmd/hc/hc
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Tests and coverage
+*.test
+*.out
+coverage.*
+*.coverprofile
+
+# Go workspace (local)
+go.work
+go.work.sum
+
+# cgo / compiler leftovers
+*.o
+*.a
+_obj/
+_test/
+
+# Environment and editor
+.env
+.env.*
+*.swp
+*~
+.idea/
+.vscode/
+.DS_Store
