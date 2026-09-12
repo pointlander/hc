@@ -83,6 +83,7 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "hackrf list: %v\n", err)
 		return 1
 	}
+	fmt.Println(devs)
 	infoA, infoB, err := hackrf.PickTwo(devs, *aWant, *bWant)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
