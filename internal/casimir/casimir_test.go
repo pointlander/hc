@@ -98,16 +98,29 @@ func TestIQLengthAndFinite(t *testing.T) {
 
 func TestValidateRejectsStackedArms(t *testing.T) {
 	d := DefaultDevice()
-	d.Arm = d.Height
+	d.Arm = d.Width
 	if err := d.Validate(); err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestLiesFlatAlongSpine(t *testing.T) {
+	d := DefaultDevice()
+	if d.Width >= d.Height {
+		t.Fatalf("rotated E should be longer along the tines: %.3g × %.3g", d.Width, d.Height)
+	}
+	if d.slot() <= 0 {
+		t.Fatal("slots")
+	}
+	if math.Abs(d.Area()-1.328e-3) > 1e-6 {
+		t.Fatalf("area=%g, want same metal as the upright 50×40 mm E", d.Area())
 	}
 }
 
 func TestMarkdownHasDeviceAndForce(t *testing.T) {
 	r := Report{Time: time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC), Device: DefaultDevice()}
 	md := r.Markdown()
-	for _, want := range []string{"Casimir", "1 µm", "E-shaped", "Nyquist", "Pa"} {
+	for _, want := range []string{"Casimir", "1 µm", "E-shaped", "Nyquist", "Pa", "plan", "lies flat"} {
 		if !strings.Contains(md, want) {
 			t.Fatalf("missing %q", want)
 		}

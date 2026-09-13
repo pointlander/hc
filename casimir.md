@@ -1,31 +1,33 @@
 # Casimir E-sandwich radio simulation
 
-Simulated 2026-09-13 16:07:45 UTC.
+Simulated 2026-09-13 16:16:44 UTC.
 
-An **E-shaped aluminum** sheet is clamped between two **anodized aluminum plates**. Each inner face carries **1 µm** of anodic Al₂O₃, so the E sees two metal–insulator–metal gaps. The Casimir pressure lives in those gaps. The radio output is the Johnson–Nyquist field of the same structure, shaped by lossy stripline modes of the E. At RF, ħω ≪ kT, so zero-point energy does not radiate; what a HackRF can in principle couple to is thermal, with a spectral shape set by Re(Z(f)).
+An **E-shaped aluminum** sheet **lies flat** (rotated 90°, spine along the sandwich, three arms as tines) between two **anodized aluminum plates**. Each inner face carries **1 µm** of anodic Al₂O₃, so both faces of the E see a metal–insulator–metal gap. The Casimir pressure lives in those gaps. The radio output is the Johnson–Nyquist field of the same structure, shaped by lossy stripline modes of the E. At RF, ħω ≪ kT, so zero-point energy does not radiate; what a HackRF can in principle couple to is thermal, with a spectral shape set by Re(Z(f)).
 
 ## Geometry
 
 ```
-   anodized Al plate
-  +------------------------------+
-  | 1 µm Al2O3                   |
-  |   ########################   |
-  |   ####                       |
-  |   ########################   |  E-shaped Al
-  |   ####                       |
-  |   ########################   |
-  | 1 µm Al2O3                   |
-  +------------------------------+
-   anodized Al plate
+side (gap exaggerated):
+  ==============================  top anodized Al plate
+  ------------------------------  1 µm Al2O3
+  ##############################  E sheet, lying flat
+  ------------------------------  1 µm Al2O3
+  ==============================  bottom anodized Al plate
+
+plan (through the top plate), E rotated 90°:
+     ####      ####      ####
+     ####      ####      ####
+     ####      ####      ####
+     ########################
+          tines up, spine along the plates
 ```
 
 | | |
 | --- | ---: |
-| E outline | 50.0 mm × 40.0 mm |
-| Spine / arm | 8.0 mm / 8.0 mm |
-| Slot height | 8.0 mm |
-| E thickness | 0.40 mm |
+| E outline (spine × tines) | 40.0 mm × 50.0 mm |
+| Spine thickness / tine width | 8.0 mm / 8.0 mm |
+| Slot between tines | 8.0 mm |
+| E sheet thickness | 0.40 mm |
 | Anodization (each plate) | **1 µm** |
 | Al₂O₃ ε<sub>r</sub> / tanδ | 9.8 / 0.015 |
 | Al conductivity | 3.56e+07 S/m |
@@ -35,14 +37,14 @@ An **E-shaped aluminum** sheet is clamped between two **anodized aluminum plates
 
 ## Electromagnetics
 
-The 1 µm gap makes this a **very low-impedance stripline** (Z<sub>0</sub> milliohms). Skin-effect loss in the aluminum dominates, so the geometric half-wave modes (TM<sub>10</sub> ~ 958 MHz, slot path ~ 725 MHz) are **overdamped**. The structure behaves as a ~230 nF MIM capacitor: |Z| falls with frequency and the radio output is a smooth thermal continuum, not a comb of spurs.
+Lying flat, the E is a **very low-impedance stripline** between the two plates (Z<sub>0</sub> milliohms). Skin-effect loss in the aluminum dominates, so the geometric half-wave modes (TM<sub>10</sub> along the tines ~ 958 MHz, slot path ~ 725 MHz) are **overdamped**. The structure behaves as a ~230 nF MIM capacitor: |Z| falls with frequency and the radio output is a smooth thermal continuum, not a comb of spurs.
 
 | | |
 | --- | ---: |
 | MIM capacitance (both gaps) | **230.46 nF** |
 | Phase velocity c/√ε<sub>r</sub> | 0.319 c |
-| Ideal TM<sub>10</sub> (along arms) | 957.7 MHz |
-| Ideal TM<sub>01</sub> (across arms) | 1197.1 MHz |
+| Ideal TM<sub>10</sub> (along tines) | 957.7 MHz |
+| Ideal TM<sub>01</sub> (along spine) | 1197.1 MHz |
 | Ideal slot-lengthened path | 725.5 MHz |
 | Series |Z| dip | none below 6 GHz (RC-like) |
 

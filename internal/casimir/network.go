@@ -5,14 +5,14 @@ import (
 	"math/cmplx"
 )
 
-// Impedance is the Thevenin impedance of the E as seen from a probe at
-// the junction of the spine and the center arm.
+// Impedance is the Thevenin impedance of the flat E as seen from a probe
+// at the junction of the spine and the center tine.
 func (d Device) Impedance(freq float64) complex128 {
 	if freq < 1 {
 		freq = 1
 	}
 	armLen := d.armLen()
-	leg := d.Arm + d.slotH() // center-line of center arm to center-line of an outer arm
+	leg := d.Arm + d.slot() // center-line of center tine to center-line of an outer tine
 
 	zcArm, gArm := d.line(freq, d.Arm)
 	zcSp, gSp := d.line(freq, d.Spine)
@@ -35,7 +35,7 @@ func (d Device) line(freq, width float64) (zc, gamma complex128) {
 	w := width
 	h := d.Oxide
 	omega := 2 * math.Pi * freq
-	// Symmetric stripline: E between two grounds, gap h on each side.
+	// Symmetric stripline: E sheet lying flat between two grounds, gap h on each side.
 	cp := 2 * eps0 * d.EpsR * w / h
 	lp := mu0 * h / (2 * w)
 	delta := math.Sqrt(2 / (omega * mu0 * d.Sigma))

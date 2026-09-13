@@ -14,15 +14,16 @@ const (
 	eta0 = 376.730313461
 )
 
-// Device is an E-shaped aluminum conductor sandwiched between two
-// anodized aluminum plates. The anodic Al2O3 on each inner face is the
-// Casimir / MIM gap.
+// Device is an E-shaped aluminum sheet lying flat (parallel to the plates)
+// between two anodized aluminum plates. The letter is rotated 90° so the
+// spine runs along the sandwich and the three arms are tines. The anodic
+// Al2O3 on each inner face is the Casimir / MIM gap.
 type Device struct {
-	Width  float64 // arm-length direction, m
-	Height float64 // across the three arms, m
-	Spine  float64 // vertical bar width, m
-	Arm    float64 // each of the three arm widths, m
-	Thick  float64 // E-sheet thickness, m
+	Width  float64 // along the spine (across the three tines), m
+	Height float64 // along the arms (tine length + spine thickness), m
+	Spine  float64 // spine bar thickness (tine-length direction), m
+	Arm    float64 // each of the three tine widths, m
+	Thick  float64 // E-sheet thickness (gap direction), m
 	Oxide  float64 // anodization thickness per plate, m
 	EpsR   float64 // Al2O3 relative permittivity
 	TanD   float64 // dielectric loss tangent
@@ -32,13 +33,13 @@ type Device struct {
 	Zload  float64 // probe impedance, Ω
 }
 
-// DefaultDevice is a 50×40 mm E in 0.4 mm Al sheet between plates
-// anodized to 1 µm. Lateral size is chosen so the lowest stripline
-// self-resonance sits in the VHF/UHF range the HackRFs already scan.
+// DefaultDevice is the 50×40 mm E rotated 90° to lie flat: 40 mm along
+// the spine, 50 mm along the tines, 0.4 mm Al sheet, plates anodized to
+// 1 µm. Same piece of metal as the upright E, face-parallel to the plates.
 func DefaultDevice() Device {
 	return Device{
-		Width:  50e-3,
-		Height: 40e-3,
+		Width:  40e-3,
+		Height: 50e-3,
 		Spine:  8e-3,
 		Arm:    8e-3,
 		Thick:  0.4e-3,
@@ -52,17 +53,17 @@ func DefaultDevice() Device {
 	}
 }
 
-func (d Device) slotH() float64 {
-	return (d.Height - 3*d.Arm) / 2
+func (d Device) slot() float64 {
+	return (d.Width - 3*d.Arm) / 2
 }
 
 func (d Device) armLen() float64 {
-	return d.Width - d.Spine
+	return d.Height - d.Spine
 }
 
 // Area is the in-plane metal area of the E (bounding rectangle minus the two slots).
 func (d Device) Area() float64 {
-	s := d.slotH()
+	s := d.slot()
 	if s < 0 {
 		s = 0
 	}
@@ -73,11 +74,11 @@ func (d Device) Validate() error {
 	if d.Oxide <= 0 || d.Width <= 0 || d.Height <= 0 || d.Spine <= 0 || d.Arm <= 0 || d.Thick <= 0 {
 		return fmt.Errorf("casimir: dimensions must be positive")
 	}
-	if d.Spine >= d.Width {
-		return fmt.Errorf("casimir: spine wider than the E")
+	if d.Spine >= d.Height {
+		return fmt.Errorf("casimir: spine thicker than the E height")
 	}
-	if 3*d.Arm >= d.Height {
-		return fmt.Errorf("casimir: three arms do not fit in height")
+	if 3*d.Arm >= d.Width {
+		return fmt.Errorf("casimir: three arms do not fit along the spine")
 	}
 	if d.EpsR < 1 {
 		return fmt.Errorf("casimir: εr must be ≥ 1")

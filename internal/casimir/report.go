@@ -20,8 +20,9 @@ func (r Report) Markdown() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Casimir E-sandwich radio simulation\n\n")
 	fmt.Fprintf(&b, "Simulated %s.\n\n", r.Time.UTC().Format("2006-01-02 15:04:05 UTC"))
-	b.WriteString("An **E-shaped aluminum** sheet is clamped between two **anodized aluminum plates**. ")
-	b.WriteString("Each inner face carries **1 µm** of anodic Al₂O₃, so the E sees two metal–insulator–metal gaps. ")
+	b.WriteString("An **E-shaped aluminum** sheet **lies flat** (rotated 90°, spine along the sandwich, three arms as tines) ")
+	b.WriteString("between two **anodized aluminum plates**. ")
+	b.WriteString("Each inner face carries **1 µm** of anodic Al₂O₃, so both faces of the E see a metal–insulator–metal gap. ")
 	b.WriteString("The Casimir pressure lives in those gaps. The radio output is the Johnson–Nyquist field of the same structure, ")
 	b.WriteString("shaped by lossy stripline modes of the E. At RF, ħω ≪ kT, so zero-point energy does not radiate; ")
 	b.WriteString("what a HackRF can in principle couple to is thermal, with a spectral shape set by Re(Z(f)).\n\n")
@@ -31,10 +32,10 @@ func (r Report) Markdown() string {
 	b.WriteString(schematic())
 	b.WriteString("```\n\n")
 	fmt.Fprintf(&b, "| | |\n| --- | ---: |\n")
-	fmt.Fprintf(&b, "| E outline | %.1f mm × %.1f mm |\n", d.Width*1e3, d.Height*1e3)
-	fmt.Fprintf(&b, "| Spine / arm | %.1f mm / %.1f mm |\n", d.Spine*1e3, d.Arm*1e3)
-	fmt.Fprintf(&b, "| Slot height | %.1f mm |\n", d.slotH()*1e3)
-	fmt.Fprintf(&b, "| E thickness | %.2f mm |\n", d.Thick*1e3)
+	fmt.Fprintf(&b, "| E outline (spine × tines) | %.1f mm × %.1f mm |\n", d.Width*1e3, d.Height*1e3)
+	fmt.Fprintf(&b, "| Spine thickness / tine width | %.1f mm / %.1f mm |\n", d.Spine*1e3, d.Arm*1e3)
+	fmt.Fprintf(&b, "| Slot between tines | %.1f mm |\n", d.slot()*1e3)
+	fmt.Fprintf(&b, "| E sheet thickness | %.2f mm |\n", d.Thick*1e3)
 	fmt.Fprintf(&b, "| Anodization (each plate) | **%.3g µm** |\n", d.Oxide*1e6)
 	fmt.Fprintf(&b, "| Al₂O₃ ε<sub>r</sub> / tanδ | %.1f / %.3f |\n", d.EpsR, d.TanD)
 	fmt.Fprintf(&b, "| Al conductivity | %.2e S/m |\n", d.Sigma)
@@ -44,23 +45,23 @@ func (r Report) Markdown() string {
 
 	c := d.Capacitance()
 	v := d.phaseVelocity()
-	f10 := v / (2 * d.Width)
-	f01 := v / (2 * d.Height)
-	fslot := v / (2 * (d.Width + 2*d.slotH()))
+	f10 := v / (2 * d.Height)
+	f01 := v / (2 * d.Width)
+	fslot := v / (2 * (d.Height + 2*d.slot()))
 	fsr, zsr, haveSR := d.SeriesResonance(1e6, 6e9)
 	q := 0.0
 	if haveSR {
 		q = d.Quality(fsr)
 	}
 	fmt.Fprintf(&b, "## Electromagnetics\n\n")
-	fmt.Fprintf(&b, "The 1 µm gap makes this a **very low-impedance stripline** (Z<sub>0</sub> milliohms). ")
-	fmt.Fprintf(&b, "Skin-effect loss in the aluminum dominates, so the geometric half-wave modes (TM<sub>10</sub> ~ %.0f MHz, slot path ~ %.0f MHz) are **overdamped**. ", f10/1e6, fslot/1e6)
+	fmt.Fprintf(&b, "Lying flat, the E is a **very low-impedance stripline** between the two plates (Z<sub>0</sub> milliohms). ")
+	fmt.Fprintf(&b, "Skin-effect loss in the aluminum dominates, so the geometric half-wave modes (TM<sub>10</sub> along the tines ~ %.0f MHz, slot path ~ %.0f MHz) are **overdamped**. ", f10/1e6, fslot/1e6)
 	fmt.Fprintf(&b, "The structure behaves as a ~%.0f nF MIM capacitor: |Z| falls with frequency and the radio output is a smooth thermal continuum, not a comb of spurs.\n\n", c*1e9)
 	fmt.Fprintf(&b, "| | |\n| --- | ---: |\n")
 	fmt.Fprintf(&b, "| MIM capacitance (both gaps) | **%.2f nF** |\n", c*1e9)
 	fmt.Fprintf(&b, "| Phase velocity c/√ε<sub>r</sub> | %.3f c |\n", v/c0)
-	fmt.Fprintf(&b, "| Ideal TM<sub>10</sub> (along arms) | %.1f MHz |\n", f10/1e6)
-	fmt.Fprintf(&b, "| Ideal TM<sub>01</sub> (across arms) | %.1f MHz |\n", f01/1e6)
+	fmt.Fprintf(&b, "| Ideal TM<sub>10</sub> (along tines) | %.1f MHz |\n", f10/1e6)
+	fmt.Fprintf(&b, "| Ideal TM<sub>01</sub> (along spine) | %.1f MHz |\n", f01/1e6)
 	fmt.Fprintf(&b, "| Ideal slot-lengthened path | %.1f MHz |\n", fslot/1e6)
 	if haveSR {
 		fmt.Fprintf(&b, "| Series |Z| dip | **%s**, \\|Z\\|=%.2f mΩ, Q≈%.2f |\n\n", fmtHz(fsr), zsr*1e3, q)
@@ -115,17 +116,19 @@ func (r Report) Markdown() string {
 
 func schematic() string {
 	return strings.Join([]string{
-		"   anodized Al plate",
-		"  +------------------------------+",
-		"  | 1 µm Al2O3                   |",
-		"  |   ########################   |",
-		"  |   ####                       |",
-		"  |   ########################   |  E-shaped Al",
-		"  |   ####                       |",
-		"  |   ########################   |",
-		"  | 1 µm Al2O3                   |",
-		"  +------------------------------+",
-		"   anodized Al plate",
+		"side (gap exaggerated):",
+		"  ==============================  top anodized Al plate",
+		"  ------------------------------  1 µm Al2O3",
+		"  ##############################  E sheet, lying flat",
+		"  ------------------------------  1 µm Al2O3",
+		"  ==============================  bottom anodized Al plate",
+		"",
+		"plan (through the top plate), E rotated 90°:",
+		"     ####      ####      ####",
+		"     ####      ####      ####",
+		"     ####      ####      ####",
+		"     ########################",
+		"          tines up, spine along the plates",
 	}, "\n") + "\n"
 }
 
