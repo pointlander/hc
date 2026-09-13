@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pointlander/hc/internal/casimir"
 	"github.com/pointlander/hc/internal/hackrf"
 	"github.com/pointlander/hc/internal/spectrum"
 )
@@ -26,7 +27,27 @@ const (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "sim":
+			os.Exit(runSim(os.Args[2:]))
+		case "help", "-h", "--help":
+			usage()
+			os.Exit(0)
+		}
+	}
 	os.Exit(run(os.Args[1:]))
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, `hc — compare two HackRF One radios, or simulate a Casimir E-sandwich
+
+Usage:
+  hc [flags]       capture both radios and write spectral difference
+  hc sim [flags]   simulate radio output of the E-shaped Al sandwich
+  hc help
+
+`)
 }
 
 func run(args []string) int {
@@ -46,6 +67,7 @@ func run(args []string) int {
 	outPath := fs.String("out", defaultOut, "markdown output path")
 	aWant := fs.String("a", "", "radio A serial suffix, USB path, or index")
 	bWant := fs.String("b", "", "radio B serial suffix, USB path, or index")
+	withSim := fs.Bool("sim", false, "append Casimir E-sandwich simulation to the report")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -83,7 +105,6 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "hackrf list: %v\n", err)
 		return 1
 	}
-	fmt.Println(devs)
 	infoA, infoB, err := hackrf.PickTwo(devs, *aWant, *bWant)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -223,12 +244,78 @@ func run(args []string) int {
 	}
 
 	md := rep.Markdown()
+	if *withSim {
+		sim := casimir.Report{Time: time.Now().UTC(), Device: casimir.DefaultDevice(), Bands: freqFloats(freqs)}
+		md += "\n---\n\n" + sim.Markdown()
+	}
 	if err := os.WriteFile(*outPath, []byte(md), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "write %s: %v\n", *outPath, err)
 		return 1
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s\n", *outPath)
 	return 0
+}
+
+func runSim(args []string) int {
+	fs := flag.NewFlagSet("sim", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	outPath := fs.String("out", "casimir.md", "markdown output path")
+	oxide := fs.Float64("oxide", 1e-6, "anodization thickness, m")
+	width := fs.Float64("width", 50e-3, "E width (arm direction), m")
+	height := fs.Float64("height", 40e-3, "E height (across arms), m")
+	spine := fs.Float64("spine", 8e-3, "spine width, m")
+	arm := fs.Float64("arm", 8e-3, "arm width, m")
+	thick := fs.Float64("thick", 0.4e-3, "E sheet thickness, m")
+	eps := fs.Float64("eps", 9.8, "Al2O3 relative permittivity")
+	tand := fs.Float64("tand", 0.015, "Al2O3 loss tangent")
+	temp := fs.Float64("temp", 293.15, "temperature, K")
+	freqStr := fs.String("freq", "100e6,433e6,915e6,2.45e9", "report frequencies, Hz")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	freqs, err := parseFreqs(*freqStr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "-freq: %v\n", err)
+		return 2
+	}
+	d := casimir.DefaultDevice()
+	d.Oxide = *oxide
+	d.Width = *width
+	d.Height = *height
+	d.Spine = *spine
+	d.Arm = *arm
+	d.Thick = *thick
+	d.EpsR = *eps
+	d.TanD = *tand
+	d.Temp = *temp
+	if err := d.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return 2
+	}
+	rep := casimir.Report{Time: time.Now().UTC(), Device: d, Bands: freqFloats(freqs)}
+	cas := d.Casimir()
+	fsr, zsr, haveSR := d.SeriesResonance(1e6, 6e9)
+	fmt.Fprintf(os.Stderr, "E %.1f×%.1f mm  oxide=%.3g µm  C=%.2f nF\n", d.Width*1e3, d.Height*1e3, d.Oxide*1e6, d.Capacitance()*1e9)
+	fmt.Fprintf(os.Stderr, "Casimir P=%.2f mPa  F=%.2e N  mech=%.1f kHz\n", cas.Pressure*1e3, cas.Force, cas.MechHz/1e3)
+	if haveSR {
+		fmt.Fprintf(os.Stderr, "series |Z| dip %.1f MHz  |Z|=%.2f mΩ  Q=%.2f\n", fsr/1e6, zsr*1e3, d.Quality(fsr))
+	} else {
+		fmt.Fprintf(os.Stderr, "no series |Z| dip below 6 GHz (RC-like MIM)\n")
+	}
+	if err := os.WriteFile(*outPath, []byte(rep.Markdown()), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "write %s: %v\n", *outPath, err)
+		return 1
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s\n", *outPath)
+	return 0
+}
+
+func freqFloats(f []uint64) []float64 {
+	out := make([]float64, len(f))
+	for i, v := range f {
+		out[i] = float64(v)
+	}
+	return out
 }
 
 type captureStats struct {
