@@ -1,6 +1,6 @@
 # HackRF spectral difference
 
-Captured 2026-09-14 15:07:16 UTC.
+Captured 2026-09-14 15:10:30 UTC.
 
 Two HackRF One radios received the same band with identical gain, sample rate, and baseband filter. Each capture is a Hann-windowed Welch PSD. A constant median offset (gain / noise-figure difference) is subtracted; bins whose residual exceeds **max(6·σ<sub>MAD</sub>, 3.0 dB)** are reported as significant.
 
@@ -8,8 +8,8 @@ Two HackRF One radios received the same band with identical gain, sample rate, a
 
 | | Label | Serial | USB | Firmware | Samples | Clip | DC (I, Q) | Power |
 | --- | --- | --- | --- | --- | ---: | ---: | --- | ---: |
-| A | 288e2dc3 | `0000000000000000f75461dc288e2dc3` | 5-2 | 2023.01.1 | 2000000 | 0.000% | -0.0036, +0.0123 | -30.0 dBFS |
-| B | 2c8f32c3 | `0000000000000000f75461dc2c8f32c3` | 5-1 | 2023.01.1 | 2000000 | 0.000% | +0.0117, +0.0055 | -33.3 dBFS |
+| A | 288e2dc3 | `0000000000000000f75461dc288e2dc3` | 5-2 | 2023.01.1 | 2000000 | 0.000% | -0.0037, +0.0124 | -30.0 dBFS |
+| B | 2c8f32c3 | `0000000000000000f75461dc2c8f32c3` | 5-1 | 2023.01.1 | 2000000 | 0.000% | +0.0113, +0.0054 | -33.1 dBFS |
 
 ## Setup
 
@@ -22,46 +22,41 @@ Two HackRF One radios received the same band with identical gain, sample rate, a
 
 ## Summary
 
-- Across **4** band(s), radio **A** is **0.80 dB** hotter (median PSD offset).
-- Mean noise-floor Δ(A−B): **+0.81 dB**.
-- Mean LO leakage Δ(A−B): **+3.52 dB** (DC bin).
-- **18** significant bins in total.
+- Across **4** band(s), radio **B** is **0.10 dB** hotter (median PSD offset).
+- Mean noise-floor Δ(A−B): **-0.12 dB**.
+- Mean LO leakage Δ(A−B): **+3.65 dB** (DC bin).
+- **14** significant bins in total.
 
 Largest residuals:
 
 | Center | Offset | A | B | Δ | residual | σ |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| +915 MHz | -3 MHz | -21.0 dBFS | -28.8 dBFS | +7.83 dB | +7.22 dB | +32.8 |
-| +100 MHz | -1.9082 MHz | -41.3 dBFS | -36.7 dBFS | -4.61 dB | -4.80 dB | -16.6 |
-| +100 MHz | -3.29883 MHz | -36.3 dBFS | -40.7 dBFS | +4.43 dB | +4.25 dB | +14.7 |
-| +433 MHz | +1 MHz | -45.1 dBFS | -41.3 dBFS | -3.81 dB | -4.10 dB | -17.1 |
-| +100 MHz | -1.875 MHz | -41.6 dBFS | -37.7 dBFS | -3.86 dB | -4.04 dB | -14.0 |
-| +433 MHz | -1.00195 MHz | -27.3 dBFS | -31.6 dBFS | +4.33 dB | +4.04 dB | +16.8 |
-| +433 MHz | -3 MHz | -40.5 dBFS | -44.8 dBFS | +4.26 dB | +3.97 dB | +16.5 |
-| +433 MHz | +2 MHz | -39.4 dBFS | -43.6 dBFS | +4.23 dB | +3.93 dB | +16.4 |
+| +915 MHz | -3 MHz | -21.8 dBFS | -30.9 dBFS | +9.09 dB | +8.52 dB | +38.2 |
+| +915 MHz | -1.50391 MHz | -37.0 dBFS | -29.5 dBFS | -7.51 dB | -8.08 dB | -36.3 |
+| +915 MHz | -1.45312 MHz | -40.3 dBFS | -32.9 dBFS | -7.33 dB | -7.90 dB | -35.4 |
+| +433 MHz | +1 MHz | -44.9 dBFS | -38.1 dBFS | -6.79 dB | -7.42 dB | -34.5 |
+| +915 MHz | +2 MHz | -41.7 dBFS | -36.2 dBFS | -5.42 dB | -6.00 dB | -26.9 |
+| +2.45 GHz | -1.953 kHz | -0.4 dBFS | -3.6 dBFS | +3.18 dB | +5.05 dB | +6.2 |
+| +915 MHz | +3 MHz | -42.7 dBFS | -38.3 dBFS | -4.42 dB | -4.99 dB | -22.4 |
+| +100 MHz | +701.2 kHz | -28.1 dBFS | -23.8 dBFS | -4.25 dB | -4.51 dB | -17.0 |
 
 ## Band +100 MHz
 
 - Welch windows: A 975, B 975
-- Median offset A−B: **+0.19 dB**
-- Residual σ (MAD): **0.289 dB**; threshold **3.00 dB**
-- Noise floor: A **-45.6 dBFS**, B **-45.8 dBFS** (Δ +0.21 dB)
-- LO leakage (DC): A **3.6 dBFS**, B **-0.2 dBFS** (Δ +3.75 dB, residual +3.56 dB)
-- RMS residual: **0.88 dB**
-- Significant bins: **10**
+- Median offset A−B: **+0.26 dB**
+- Residual σ (MAD): **0.264 dB**; threshold **3.00 dB**
+- Noise floor: A **-45.6 dBFS**, B **-45.9 dBFS** (Δ +0.27 dB)
+- LO leakage (DC): A **3.6 dBFS**, B **-0.3 dBFS** (Δ +3.84 dB, residual +3.59 dB)
+- RMS residual: **0.74 dB**
+- Significant bins: **5**
 
 | Offset | A | B | Δ | residual | σ |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| -1.9082 MHz | -41.3 dBFS | -36.7 dBFS | -4.61 dB | -4.80 dB | -16.6 |
-| -3.29883 MHz | -36.3 dBFS | -40.7 dBFS | +4.43 dB | +4.25 dB | +14.7 |
-| -1.875 MHz | -41.6 dBFS | -37.7 dBFS | -3.86 dB | -4.04 dB | -14.0 |
-| -3.25781 MHz | -38.0 dBFS | -41.9 dBFS | +3.92 dB | +3.73 dB | +12.9 |
-| +668 kHz | -36.0 dBFS | -32.4 dBFS | -3.51 dB | -3.70 dB | -12.8 |
-| +730.5 kHz | -35.4 dBFS | -31.9 dBFS | -3.51 dB | -3.69 dB | -12.8 |
-| +1.953 kHz | -2.5 dBFS | -6.2 dBFS | +3.75 dB | +3.56 dB | +12.3 |
-| -1.8418 MHz | -43.7 dBFS | -40.5 dBFS | -3.20 dB | -3.38 dB | -11.7 |
-| -1.94336 MHz | -43.2 dBFS | -40.0 dBFS | -3.19 dB | -3.37 dB | -11.7 |
-| -3.34375 MHz | -38.5 dBFS | -42.1 dBFS | +3.51 dB | +3.33 dB | +11.5 |
+| +701.2 kHz | -28.1 dBFS | -23.8 dBFS | -4.25 dB | -4.51 dB | -17.0 |
+| +669.9 kHz | -38.0 dBFS | -34.1 dBFS | -3.98 dB | -4.23 dB | -16.0 |
+| +750 kHz | -39.6 dBFS | -35.8 dBFS | -3.79 dB | -4.05 dB | -15.3 |
+| +636.7 kHz | -39.7 dBFS | -36.1 dBFS | -3.65 dB | -3.90 dB | -14.8 |
+| -1.953 kHz | -2.5 dBFS | -6.3 dBFS | +3.84 dB | +3.59 dB | +13.6 |
 
 Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 
@@ -70,17 +65,17 @@ Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
                                                                               
                                                                               
                                          ##                                   
-      ...................................||.............................*.....
-                                         ||                        *    |     
-                                         ||                        |*  *|     
-        ***           ** **      * ***** ||   **     ** **  *  ****||**||* ***
-  0.0 ------------*-------------*---------------------------------------------
-      **   ******* |||  *  **|**  *     *  |**  *||**  *  ** **           *   
-                   |||       |             *     ||                           
-                   |||       *                   ||                           
-      .............*||...........................||...........................
-                    |#                           ##                           
-                    #                                                         
+      ...................................||...................................
+                                         ||                                   
+                    *                    ||                             *     
+         * ** **   *|* * **    ** *****  ||    *     * ***  * *****   **|  ** 
+  0.0 ------------------------------------------------------------------------
+      *** *  *  ***   * *  ****  *     **  **** |||** *   |* *     *|*   **  *
+                                                *||       *         *         
+                                                 ||                           
+      ...........................................||...........................
+                                                 ||                           
+                                                 ##                           
                                                                               
  -6.0                                                                         
       -3.20117 MHz                       0                        +3.20117 MHz
@@ -89,113 +84,117 @@ Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 ## Band +433 MHz
 
 - Welch windows: A 975, B 975
-- Median offset A−B: **+0.29 dB**
-- Residual σ (MAD): **0.240 dB**; threshold **3.00 dB**
-- Noise floor: A **-45.4 dBFS**, B **-45.7 dBFS** (Δ +0.30 dB)
-- LO leakage (DC): A **3.6 dBFS**, B **-0.0 dBFS** (Δ +3.60 dB, residual +3.31 dB)
-- RMS residual: **0.32 dB**
-- Significant bins: **6**
+- Median offset A−B: **+0.64 dB**
+- Residual σ (MAD): **0.215 dB**; threshold **3.00 dB**
+- Noise floor: A **-45.3 dBFS**, B **-46.0 dBFS** (Δ +0.65 dB)
+- LO leakage (DC): A **3.6 dBFS**, B **-0.2 dBFS** (Δ +3.78 dB, residual +3.14 dB)
+- RMS residual: **0.30 dB**
+- Significant bins: **2**
 
 | Offset | A | B | Δ | residual | σ |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| +1 MHz | -45.1 dBFS | -41.3 dBFS | -3.81 dB | -4.10 dB | -17.1 |
-| -1.00195 MHz | -27.3 dBFS | -31.6 dBFS | +4.33 dB | +4.04 dB | +16.8 |
-| -3 MHz | -40.5 dBFS | -44.8 dBFS | +4.26 dB | +3.97 dB | +16.5 |
-| +2 MHz | -39.4 dBFS | -43.6 dBFS | +4.23 dB | +3.93 dB | +16.4 |
-| +1.953 kHz | -2.5 dBFS | -6.1 dBFS | +3.60 dB | +3.31 dB | +13.8 |
-| -2 MHz | -41.9 dBFS | -45.4 dBFS | +3.49 dB | +3.20 dB | +13.3 |
+| +1 MHz | -44.9 dBFS | -38.1 dBFS | -6.79 dB | -7.42 dB | -34.5 |
+| -1.953 kHz | -2.4 dBFS | -6.2 dBFS | +3.78 dB | +3.15 dB | +14.6 |
 
 Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 
 ```
- +6.0                                                                         
+ +7.4                                                                         
                                                                               
                                                                               
-        #                     #                                 #             
-      ..|..........#..........|..........##.....................|.............
-        |          |          |          ||                     |             
-        |          |          |          ||                     |             
-       *| ** *** * | ***** ***|*** ***   ||** ******* *   *  ** |        ***  
-  0.0 ----------------------------*-------------------------------------------
-      *  *  *   * * *     *           ***    *       | *** **  * ********   **
-                                                     |                        
-                                                     |                        
+                                                                              
+                                                                              
+      ...................................##...................................
+                                         ||                                   
+        *****      ****** * *     * ** **||     *  *       *  ** **      ** * 
+  0.0 **-------**-*--------*-------*--*------*-*-**----*----**-----*---*------
+             **  *       *   *|***         ** *     *|* ***     *   *** *  * *
+                              *                      |                        
       ...............................................|........................
-                                                     #                        
-                                                                              
-                                                                              
- -6.0                                                                         
+                                                     |                        
+                                                     |                        
+                                                     |                        
+                                                     |                        
+ -7.4                                                #                        
       -3.20117 MHz                       0                        +3.20117 MHz
 ```
 
 ## Band +915 MHz
 
 - Welch windows: A 975, B 975
-- Median offset A−B: **+0.62 dB**
-- Residual σ (MAD): **0.220 dB**; threshold **3.00 dB**
-- Noise floor: A **-45.4 dBFS**, B **-46.0 dBFS** (Δ +0.61 dB)
-- LO leakage (DC): A **3.5 dBFS**, B **-0.1 dBFS** (Δ +3.60 dB, residual +2.99 dB)
-- RMS residual: **0.34 dB**
-- Significant bins: **2**
+- Median offset A−B: **+0.57 dB**
+- Residual σ (MAD): **0.223 dB**; threshold **3.00 dB**
+- Noise floor: A **-45.4 dBFS**, B **-46.0 dBFS** (Δ +0.59 dB)
+- LO leakage (DC): A **3.6 dBFS**, B **-0.2 dBFS** (Δ +3.80 dB, residual +3.23 dB)
+- RMS residual: **0.55 dB**
+- Significant bins: **6**
 
 | Offset | A | B | Δ | residual | σ |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| -3 MHz | -21.0 dBFS | -28.8 dBFS | +7.83 dB | +7.22 dB | +32.8 |
-| +2 MHz | -40.7 dBFS | -45.0 dBFS | +4.33 dB | +3.71 dB | +16.9 |
+| -3 MHz | -21.8 dBFS | -30.9 dBFS | +9.09 dB | +8.52 dB | +38.2 |
+| -1.50391 MHz | -37.0 dBFS | -29.5 dBFS | -7.51 dB | -8.08 dB | -36.3 |
+| -1.45312 MHz | -40.3 dBFS | -32.9 dBFS | -7.33 dB | -7.90 dB | -35.4 |
+| +2 MHz | -41.7 dBFS | -36.2 dBFS | -5.42 dB | -6.00 dB | -26.9 |
+| +3 MHz | -42.7 dBFS | -38.3 dBFS | -4.42 dB | -4.99 dB | -22.4 |
+| -1.953 kHz | -2.4 dBFS | -6.2 dBFS | +3.80 dB | +3.23 dB | +14.5 |
 
 Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 
 ```
- +7.2   #                                                                     
+ +8.5   #                                                                     
         |                                                                     
         |                                                                     
         |                                                                     
-        |                                                       #             
-      ..|................................**.....................|.............
-        |                                ||                     |             
-        | * **   **    ******   * * **** ||*     **         ** *| *  *        
-  0.0 ---*-*--***------------------*---------*--*--*--*-***---*--*----**-----*
-      **           ****      *|* *      *   * **    *| *   *       **   ***** 
-                              *                      *                        
-      ........................................................................
-                                                                              
-                                                                              
-                                                                              
-                                                                              
- -7.2                                                                         
+        |                                                                     
+      ..|................................##...................................
+        |                                ||                                   
+        |*  **             *        **  *|| *  ** *          **     **  *     
+  0.0 **--**--**-**-*-**-----*-*****--**-----*---*-**-*----**--*--**--*--**-*-
+                *  * *  ||* * |            *  *      * ****     |*     *   | *
+                        ||    *                                 |          |  
+      ..................#|......................................|..........|..
+                         |                                      |          |  
+                         |                                      |          #  
+                         |                                      #             
+                         |                                                    
+ -8.5                    #                                                    
       -3.20117 MHz                       0                        +3.20117 MHz
 ```
 
 ## Band +2.45 GHz
 
 - Welch windows: A 975, B 975
-- Median offset A−B: **+2.10 dB**
-- Residual σ (MAD): **1.265 dB**; threshold **7.59 dB**
-- Noise floor: A **-40.8 dBFS**, B **-42.9 dBFS** (Δ +2.11 dB)
-- LO leakage (DC): A **5.6 dBFS**, B **2.5 dBFS** (Δ +3.15 dB, residual +1.05 dB)
-- RMS residual: **0.90 dB**
-- Significant bins: **0**
+- Median offset A−B: **-1.88 dB**
+- Residual σ (MAD): **0.820 dB**; threshold **4.92 dB**
+- Noise floor: A **-41.3 dBFS**, B **-39.3 dBFS** (Δ -1.99 dB)
+- LO leakage (DC): A **5.6 dBFS**, B **2.4 dBFS** (Δ +3.18 dB, residual +5.05 dB)
+- RMS residual: **0.85 dB**
+- Significant bins: **1**
+
+| Offset | A | B | Δ | residual | σ |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| -1.953 kHz | -0.4 dBFS | -3.6 dBFS | +3.18 dB | +5.05 dB | +6.2 |
 
 Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 
 ```
-+15.2                                                                         
+ +9.8                                                                         
                                                                               
                                                                               
+                                                                              
+      ...................................##...................................
+                                         ||                                   
+                                         ||                                   
+             **                       ***||**************************         
+  0.0 -------------------------------*----------------------------------------
+      *******  **********|***********                                *********
+                         *                                                    
                                                                               
       ........................................................................
                                                                               
                                                                               
-      *******  ************************** **                                  
-  0.0 -------**------------------------------*----------------------------**--
-                                         *  * ****************************  **
                                                                               
-                                                                              
-      ........................................................................
-                                                                              
-                                                                              
-                                                                              
--15.2                                                                         
+ -9.8                                                                         
       -3.20117 MHz                       0                        +3.20117 MHz
 ```
 
@@ -204,7 +203,7 @@ Residual spectrum (dB, median offset removed). `A` is hotter above the axis.
 
 # Casimir E-sandwich radio simulation
 
-Simulated 2026-09-14 15:07:18 UTC.
+Simulated 2026-09-14 15:10:32 UTC.
 
 An **E-shaped aluminum** sheet **lies flat** (rotated 90°, spine along the sandwich, three arms as tines) between two **anodized aluminum plates**. Each inner face carries **1 µm** of anodic Al₂O₃, so both faces of the E see a metal–insulator–metal gap. The Casimir pressure lives in those gaps. The radio output is the Johnson–Nyquist field of the same structure, shaped by lossy stripline modes of the E. At RF, ħω ≪ kT, so zero-point energy does not radiate; what a HackRF can in principle couple to is thermal, with a spectral shape set by Re(Z(f)).
 
