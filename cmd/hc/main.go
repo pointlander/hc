@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -31,6 +32,8 @@ func main() {
 		switch os.Args[1] {
 		case "sim":
 			os.Exit(runSim(os.Args[2:]))
+		case "evolve":
+			os.Exit(runEvolve(os.Args[2:]))
 		case "help", "-h", "--help":
 			usage()
 			os.Exit(0)
@@ -43,8 +46,9 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `hc — compare two HackRF One radios, or simulate a Casimir E-sandwich
 
 Usage:
-  hc [flags]       capture both radios and write spectral difference
-  hc sim [flags]   simulate radio output of the E-shaped Al sandwich
+  hc [flags]          capture both radios and write spectral difference
+  hc sim [flags]      simulate radio output of the E-shaped Al sandwich
+  hc evolve [flags]   genetically search the center-sheet shape for max power
   hc help
 
 `)
@@ -302,6 +306,64 @@ func runSim(args []string) int {
 	} else {
 		fmt.Fprintf(os.Stderr, "no series |Z| dip below 6 GHz (RC-like MIM)\n")
 	}
+	if err := os.WriteFile(*outPath, []byte(rep.Markdown()), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "write %s: %v\n", *outPath, err)
+		return 1
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s\n", *outPath)
+	return 0
+}
+
+func runEvolve(args []string) int {
+	fs := flag.NewFlagSet("evolve", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	pop := fs.Int("pop", 40, "population size")
+	gen := fs.Int("gen", 60, "generations")
+	rows := fs.Int("rows", 16, "grid rows")
+	cols := fs.Int("cols", 16, "grid columns")
+	seed := fs.Int64("seed", 42, "RNG seed")
+	pngPath := fs.String("png", "sheet.png", "geometry PNG path")
+	outPath := fs.String("out", "evolve.md", "markdown output path")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	cfg := casimir.DefaultEvolve()
+	cfg.Pop, cfg.Gen = *pop, *gen
+	cfg.Rows, cfg.Cols = *rows, *cols
+	cfg.Log = func(g int, best casimir.Individual) {
+		if g%10 == 0 || g == cfg.Gen {
+			fmt.Fprintf(os.Stderr, "gen %d  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
+				g, best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3)
+		}
+	}
+	rng := rand.New(rand.NewSource(*seed))
+
+	baseG := casimir.Grid{Rows: cfg.Rows, Cols: cfg.Cols, Metal: make([]bool, cfg.Rows*cfg.Cols), Mat: cfg.Mat}
+	baseG.FillE(cfg.Mat)
+	baseline := casimir.Individual{Metal: append([]bool(nil), baseG.Metal...), Span: baseG.Span}
+	cfg.Evaluate(&baseline)
+	fmt.Fprintf(os.Stderr, "E baseline  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
+		baseline.P50dBm, baseline.Fit, 100*baseline.Fill, baseline.Span*1e3)
+
+	best := casimir.Evolve(cfg, rng)
+	fmt.Fprintf(os.Stderr, "best        P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
+		best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3)
+
+	g := casimir.Grid{Rows: cfg.Rows, Cols: cfg.Cols, Span: best.Span, Metal: best.Metal, Mat: cfg.Mat}
+	f, err := os.Create(*pngPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "create %s: %v\n", *pngPath, err)
+		return 1
+	}
+	if err := g.WritePNG(f, 768); err != nil {
+		f.Close()
+		fmt.Fprintf(os.Stderr, "png: %v\n", err)
+		return 1
+	}
+	f.Close()
+	fmt.Fprintf(os.Stderr, "wrote %s\n", *pngPath)
+
+	rep := casimir.EvolveReport{Time: time.Now().UTC(), Config: cfg, Best: best, Baseline: baseline}
 	if err := os.WriteFile(*outPath, []byte(rep.Markdown()), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "write %s: %v\n", *outPath, err)
 		return 1
