@@ -322,6 +322,8 @@ func runEvolve(args []string) int {
 	rows := fs.Int("rows", 16, "grid rows")
 	cols := fs.Int("cols", 16, "grid columns")
 	seed := fs.Int64("seed", 42, "RNG seed")
+	plate := fs.Float64("plate", 50e-3, "anodized plate edge length, m (sheet may be larger)")
+	maxSpan := fs.Float64("maxspan", 0.25, "maximum sheet span, m")
 	pngPath := fs.String("png", "sheet.png", "geometry PNG path")
 	outPath := fs.String("out", "evolve.md", "markdown output path")
 	if err := fs.Parse(args); err != nil {
@@ -330,10 +332,12 @@ func runEvolve(args []string) int {
 	cfg := casimir.DefaultEvolve()
 	cfg.Pop, cfg.Gen = *pop, *gen
 	cfg.Rows, cfg.Cols = *rows, *cols
+	cfg.PlateSpan = *plate
+	cfg.MaxSpan = *maxSpan
 	cfg.Log = func(g int, best casimir.Individual) {
 		if g%10 == 0 || g == cfg.Gen {
-			fmt.Fprintf(os.Stderr, "gen %d  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
-				g, best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3)
+			fmt.Fprintf(os.Stderr, "gen %d  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  sheet=%.2f mm  plates=%.2f mm\n",
+				g, best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3, cfg.PlateSpan*1e3)
 		}
 	}
 	rng := rand.New(rand.NewSource(*seed))
@@ -342,14 +346,14 @@ func runEvolve(args []string) int {
 	baseG.FillE(cfg.Mat)
 	baseline := casimir.Individual{Metal: append([]bool(nil), baseG.Metal...), Span: baseG.Span}
 	cfg.Evaluate(&baseline)
-	fmt.Fprintf(os.Stderr, "E baseline  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
-		baseline.P50dBm, baseline.Fit, 100*baseline.Fill, baseline.Span*1e3)
+	fmt.Fprintf(os.Stderr, "E baseline  P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  sheet=%.2f mm  plates=%.2f mm\n",
+		baseline.P50dBm, baseline.Fit, 100*baseline.Fill, baseline.Span*1e3, cfg.PlateSpan*1e3)
 
 	best := casimir.Evolve(cfg, rng)
-	fmt.Fprintf(os.Stderr, "best        P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  span=%.2f mm\n",
-		best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3)
+	fmt.Fprintf(os.Stderr, "best        P=%.2f dBm/Hz  fit=%.2e  fill=%.1f%%  sheet=%.2f mm  plates=%.2f mm\n",
+		best.P50dBm, best.Fit, 100*best.Fill, best.Span*1e3, cfg.PlateSpan*1e3)
 
-	g := casimir.Grid{Rows: cfg.Rows, Cols: cfg.Cols, Span: best.Span, Metal: best.Metal, Mat: cfg.Mat}
+	g := casimir.Grid{Rows: cfg.Rows, Cols: cfg.Cols, Span: best.Span, PlateSpan: cfg.PlateSpan, Metal: best.Metal, Mat: cfg.Mat}
 	f, err := os.Create(*pngPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "create %s: %v\n", *pngPath, err)

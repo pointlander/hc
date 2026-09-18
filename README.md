@@ -78,11 +78,11 @@ An example simulation is in [`casimir.md`](casimir.md).
 
 ## Evolve the center sheet
 
-`hc evolve` runs a genetic search over metal occupancy on a 16×16 lattice (plus overall span). Ranking fitness is mean 50 Ω thermal power times metal area, so the sheet does not collapse to a single cell. The E is a seed. The winning plan is written to `sheet.png` and `evolve.md`.
+`hc evolve` runs a genetic search over metal occupancy on a 16×16 lattice (plus overall span). The center sheet may be **larger than the anodized plates**; only metal under the plates sees the 1 µm MIM gap, while overhang stays electrically connected. Ranking fitness is mean 50 Ω thermal power times total metal area. The E is a seed. The winning plan is written to `sheet.png` and `evolve.md`.
 
 ```sh
 ./hc evolve -png sheet.png -out evolve.md
-./hc evolve -pop 40 -gen 60 -seed 42
+./hc evolve -plate 0.05 -maxspan 0.25 -pop 40 -gen 60 -seed 42
 ```
 
 ## License

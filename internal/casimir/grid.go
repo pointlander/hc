@@ -2,12 +2,14 @@ package casimir
 
 import "math"
 
-// Grid is a coplanar metal occupancy on a rectangular lattice lying
-// flat between the two anodized plates. Empty cells are the 1 µm oxide
-// facing itself; metal cells are the center sheet.
+// Grid is a coplanar metal occupancy on a rectangular lattice. The
+// center sheet may extend past the anodized plates: only metal whose
+// cell center lies under the centered plates sees the 1 µm MIM gap.
+// Overhang is still electrically connected but has no MIM capacitance.
 type Grid struct {
 	Rows, Cols int
-	Span       float64 // bounding-box width (= height if square cells), m
+	Span       float64 // sheet bounding-box width (= height if square cells), m
+	PlateSpan  float64 // square plates, centered; ≤0 means plates = sheet
 	Metal      []bool  // row-major, length Rows*Cols
 	Mat        Device
 }
@@ -25,6 +27,51 @@ func (g Grid) cellH() float64 {
 	}
 	hspan := g.Span * float64(g.Rows) / float64(g.Cols)
 	return hspan / float64(g.Rows)
+}
+
+func (g Grid) sheetSize() (w, h float64) {
+	w = g.Span
+	if g.Cols == 0 {
+		return w, w
+	}
+	return w, g.Span * float64(g.Rows) / float64(g.Cols)
+}
+
+// effectivePlateSpan is the plate edge length. Zero PlateSpan means the
+// plates are the same size as the sheet (legacy sandwich).
+func (g Grid) effectivePlateSpan() float64 {
+	if g.PlateSpan > 0 {
+		return g.PlateSpan
+	}
+	return g.Span
+}
+
+// covered reports whether cell (r,c) sits under the centered plates.
+func (g Grid) covered(r, c int) bool {
+	ps := g.effectivePlateSpan()
+	sw, sh := g.sheetSize()
+	if ps >= sw && ps >= sh {
+		return true
+	}
+	cw, ch := g.cellW(), g.cellH()
+	x := (float64(c) + 0.5) * cw
+	y := (float64(r) + 0.5) * ch
+	x0 := (sw - ps) / 2
+	y0 := (sh - ps) / 2
+	return x >= x0 && x < x0+ps && y >= y0 && y < y0+ps
+}
+
+// OverlapArea is metal area under the plates (Casimir / MIM area).
+func (g Grid) OverlapArea() float64 {
+	n := 0
+	for r := 0; r < g.Rows; r++ {
+		for c := 0; c < g.Cols; c++ {
+			if g.at(r, c) && g.covered(r, c) {
+				n++
+			}
+		}
+	}
+	return float64(n) * g.cellW() * g.cellH()
 }
 
 func (g Grid) at(r, c int) bool {
@@ -194,8 +241,7 @@ func (g Grid) Impedance(freq float64) (complex128, bool) {
 	omega := 2 * math.Pi * freq
 	cw, ch := g.cellW(), g.cellH()
 	mat := g.Mat
-	cCell := 2 * eps0 * mat.EpsR * cw * ch / mat.Oxide
-	gCell := omega * cCell * mat.TanD
+	cMIM := 2 * eps0 * mat.EpsR * cw * ch / mat.Oxide
 	delta := math.Sqrt(2 / (omega * mu0 * mat.Sigma))
 	skin := delta
 	if mat.Thick > 0 && mat.Thick < skin {
@@ -203,10 +249,19 @@ func (g Grid) Impedance(freq float64) (complex128, bool) {
 	}
 	rsq := 1 / (mat.Sigma * skin)
 
+	cov := make([]bool, n)
+	for i, nd := range used {
+		cov[i] = g.covered(nd.r, nd.c)
+	}
+
 	y := make([][]complex128, n)
 	for i := 0; i < n; i++ {
 		y[i] = make([]complex128, n)
-		y[i][i] = complex(gCell, omega*cCell)
+		cc := 0.0
+		if cov[i] {
+			cc = cMIM
+		}
+		y[i][i] = complex(omega*cc*mat.TanD, omega*cc)
 	}
 	pos := make(map[int]int, n)
 	for i, nd := range used {
@@ -218,6 +273,10 @@ func (g Grid) Impedance(freq float64) (complex128, bool) {
 		}
 		r := rsq * (length / width)
 		l := mu0 * mat.Oxide / 2 * (length / width)
+		if !cov[i] || !cov[j] {
+			// Overhang is not a 1 µm stripline; use free-wire inductance.
+			l = mu0 * length
+		}
 		z := complex(r, omega*l)
 		if z == 0 {
 			return

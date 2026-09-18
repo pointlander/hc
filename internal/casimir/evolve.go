@@ -25,6 +25,7 @@ type EvolveConfig struct {
 	Elite      int
 	MinSpan    float64
 	MaxSpan    float64
+	PlateSpan  float64 // fixed anodized plates; sheet Span may exceed this
 	Freqs      []float64
 	Mat        Device
 	Log        func(gen int, best Individual)
@@ -32,22 +33,23 @@ type EvolveConfig struct {
 
 func DefaultEvolve() EvolveConfig {
 	return EvolveConfig{
-		Rows:    16,
-		Cols:    16,
-		Pop:     40,
-		Gen:     60,
-		MutP:    0.04,
-		Elite:   2,
-		MinSpan: 2e-3,
-		MaxSpan: 0.12,
-		Freqs:   []float64{100e6, 433e6, 915e6, 2.45e9},
-		Mat:     DefaultDevice(),
+		Rows:      16,
+		Cols:      16,
+		Pop:       40,
+		Gen:       60,
+		MutP:      0.04,
+		Elite:     2,
+		MinSpan:   2e-3,
+		MaxSpan:   0.25,
+		PlateSpan: 50e-3, // DefaultDevice sandwich; sheet may overhang
+		Freqs:     []float64{100e6, 433e6, 915e6, 2.45e9},
+		Mat:       DefaultDevice(),
 	}
 }
 
 func (c EvolveConfig) grid(ind Individual) Grid {
 	m := append([]bool(nil), ind.Metal...)
-	return Grid{Rows: c.Rows, Cols: c.Cols, Span: ind.Span, Metal: m, Mat: c.Mat}
+	return Grid{Rows: c.Rows, Cols: c.Cols, Span: ind.Span, PlateSpan: c.PlateSpan, Metal: m, Mat: c.Mat}
 }
 
 func (c EvolveConfig) Evaluate(ind *Individual) {
@@ -99,7 +101,7 @@ func Evolve(cfg EvolveConfig, rng *rand.Rand) Individual {
 		cfg.MinSpan = 2e-3
 	}
 	if cfg.MaxSpan <= cfg.MinSpan {
-		cfg.MaxSpan = 0.12
+		cfg.MaxSpan = 0.25
 	}
 	pop := make([]Individual, cfg.Pop)
 	for i := range pop {

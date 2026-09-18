@@ -99,6 +99,49 @@ func TestPruneDropsIslands(t *testing.T) {
 	}
 }
 
+func TestOverhangCapacitanceIsPlateArea(t *testing.T) {
+	d := DefaultDevice()
+	n := 8
+	plate := 0.04
+	full := Grid{Rows: n, Cols: n, Span: plate, Metal: make([]bool, n*n), Mat: d}
+	big := Grid{Rows: n, Cols: n, Span: 2 * plate, PlateSpan: plate, Metal: make([]bool, n*n), Mat: d}
+	for i := range full.Metal {
+		full.Metal[i] = true
+		big.Metal[i] = true
+	}
+	zFull, ok := full.Impedance(1e5)
+	if !ok {
+		t.Fatal("full")
+	}
+	zBig, ok := big.Impedance(1e5)
+	if !ok {
+		t.Fatal("big")
+	}
+	cFull := -1 / (2 * math.Pi * 1e5 * imag(zFull))
+	cBig := -1 / (2 * math.Pi * 1e5 * imag(zBig))
+	cPlate := 2 * eps0 * d.EpsR * plate * plate / d.Oxide
+	if math.Abs(cFull-cPlate)/cPlate > 0.25 {
+		t.Fatalf("flush C=%g want ~%g", cFull, cPlate)
+	}
+	if math.Abs(cBig-cPlate)/cPlate > 0.25 {
+		t.Fatalf("overhang C=%g want ~plate %g (got sheet area would be 4×)", cBig, cPlate)
+	}
+	if big.OverlapArea() > big.Area()*0.4 {
+		t.Fatalf("overlap %g should be ~1/4 of metal %g", big.OverlapArea(), big.Area())
+	}
+}
+
+func TestOverhangASCII(t *testing.T) {
+	g := Grid{Rows: 4, Cols: 4, Span: 0.08, PlateSpan: 0.04, Metal: make([]bool, 16), Mat: DefaultDevice()}
+	for i := range g.Metal {
+		g.Metal[i] = true
+	}
+	s := g.ASCII()
+	if !strings.Contains(s, "+") || !strings.Contains(s, "#") {
+		t.Fatalf("want both overlap and overhang marks:\n%s", s)
+	}
+}
+
 func TestASCII(t *testing.T) {
 	g := Grid{Rows: 2, Cols: 2, Metal: []bool{true, false, false, true}}
 	s := g.ASCII()
